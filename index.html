@@ -1,20 +1,991 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="ZENVIA Services — Revenue Engine powering ENSO Holistic Wellness" />
-    <meta property="og:title" content="ZENVIA Revenue Engine" />
-    <meta property="og:description" content="90-day revenue acceleration plan for ENSO Holistic Wellness, Nairobi" />
-    <title>ZENVIA Revenue Engine</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #1a1e17; }
-      #root { min-height: 100vh; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ZENVIA Services — Operations System powering ENSO Holistic Wellness"/>
+  <title>ZENVIA Operations System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#1a1e17;font-family:Georgia,'Times New Roman',serif}
+    #root{min-height:100vh}
+    input,select,textarea{font-family:Georgia,'Times New Roman',serif}
+    input[type=range]{cursor:pointer;width:100%}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-track{background:#1a1e17}
+    ::-webkit-scrollbar-thumb{background:#4a4a3e;border-radius:2px}
+    button:disabled{opacity:0.5;cursor:not-allowed}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const React = window.React;
+const ReactDOM = window.ReactDOM;
+// ── CONSTANTS & DATA ─────────────────────────────────────────────────────────
+const C = {
+  bg:"#1a1e17",bg2:"#1f241c",moss:"#7C9A6E",clay:"#C4956A",
+  gold:"#D4A853",ocean:"#6B8FAB",stone:"#8B7355",red:"#AB6B6B",
+  text:"#d4cfc4",muted:"#7a7468",dim:"#4a4a3e",faint:"#1e221b",
+};
+const kes = n => `KES ${Number(n).toLocaleString()}`;
+const today = () => new Date().toISOString().slice(0,10);
+
+const SPRINT_PHASES = [
+  { id:0, week:"Week 1–2", phase:"Foundation", color:C.moss, unlock:25000,
+    actions:[
+      "WhatsApp broadcast to full ENSO community list",
+      "7-day Instagram content calendar live via Postiz",
+      "SPARK booking link in every bio + broadcast",
+      "Instagram account health baseline + hashtag audit",
+      "Post-session follow-up WhatsApp sequence live",
+      "Dr. Alia intake form auto-sent on booking"
+    ]},
+  { id:1, week:"Week 3–4", phase:"Content Engine", color:C.clay, unlock:40000,
+    actions:[
+      "3 Reels/week via FRAME (EdgeTTS + Pexels)",
+      "GramAddict warm-up @enso_holistic (Tier 1)",
+      "Weekly intelligence brief — SCOUT running",
+      "Email list opt-in from Instagram bio",
+      "WhatsApp booking reminder: 24h + 2h before sessions",
+      "Heal in Nature event teaser campaign launch"
+    ]},
+  { id:2, week:"Month 2", phase:"Revenue Diversification", color:C.gold, unlock:80000,
+    actions:[
+      "10 corporate wellness cold emails via REACH",
+      "First Heal in Nature event (10 vendor spots × KES 5K)",
+      "Hotel wellness proposal → 5 Nairobi hotels",
+      "LEDGE weekly revenue report live",
+      "Instagram growth: enter growing tier",
+      "Dr. Alia private sessions fully booked"
+    ]},
+  { id:3, week:"Month 3", phase:"Scale & Lock In", color:C.ocean, unlock:150000,
+    actions:[
+      "First corporate wellness contract signed",
+      "ZENVIA retainer renegotiation with ENSO",
+      "Second wellness client onboarded (AURA white-label)",
+      "Second Heal in Nature event — 20 vendors × KES 5K",
+      "Hotel wellness retainer signed",
+      "SPARK sessions at 85%+ fill"
+    ]},
+];
+
+const REVENUE_STREAMS = ["SPARK Studio","Dr. Alia Private","Corporate Wellness","Heal in Nature","Entim Sidai"];
+const TARGETS = { base:35000, monthly:40000 };
+
+const OUTREACH_STAGES = ["Identified","Contacted","Proposal Sent","Negotiating","Closed","Lost"];
+const STAGE_COLORS = { "Identified":C.dim,"Contacted":C.ocean,"Proposal Sent":C.clay,"Negotiating":C.gold,"Closed":C.moss,"Lost":C.red };
+
+const CONTENT_FORMATS = ["Reel","Carousel","Story","Single","Live"];
+const CONTENT_PILLARS = ["Breathwork","Movement","Sound Healing","Community","Practitioner Spotlight","Nature","Event Promo"];
+
+// ── STORAGE HELPERS ──────────────────────────────────────────────────────────
+const store = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const defaultRevenue = () => ({ week: today(), spark:0, private_sessions:0, corporate:0, events:0, entim:0, notes:"" });
+const defaultProspect = () => ({ id: Date.now(), company:"", type:"Corporate", contact:"", stage:"Identified", value:0, notes:"", date: today() });
+const defaultPost = () => ({ id: Date.now(), date: today(), format:"Reel", pillar:"Breathwork", topic:"", caption:"", status:"Planned", platform:"Instagram" });
+// ── STYLE HELPERS ────────────────────────────────────────────────────────────
+const S = {
+  card: (b="rgba(255,255,255,0.07)") => ({ border:`1px solid ${b}`,borderRadius:8,padding:"1.1rem",background:C.faint,marginBottom:"0.85rem" }),
+  lbl: { fontSize:"0.6rem",letterSpacing:"0.2em",color:C.dim,textTransform:"uppercase",display:"block",marginBottom:"0.35rem" },
+  inp: { background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:5,color:C.text,padding:"0.45rem 0.7rem",fontSize:"0.8rem",width:"100%",outline:"none",marginBottom:"0.5rem" },
+  btn: (c=C.moss,s="md") => ({ background:`${c}22`,border:`1px solid ${c}55`,color:c,borderRadius:5,padding:s==="sm"?"0.3rem 0.7rem":"0.45rem 1rem",cursor:"pointer",fontSize:s==="sm"?"0.7rem":"0.77rem",letterSpacing:"0.06em",whiteSpace:"nowrap" }),
+  tag: (c) => ({ fontSize:"0.6rem",padding:"0.12rem 0.4rem",borderRadius:3,background:`${c}18`,color:c,border:`1px solid ${c}33` }),
+};
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({ sprintProgress, revenueLog, outreach, briefing, onBriefing, briefingLoading }) {
+  const totalUnlocked = SPRINT_PHASES.reduce((sum, ph) => {
+    const done = (sprintProgress[ph.id]||[]).filter(Boolean).length;
+    const pct = done / ph.actions.length;
+    return sum + Math.round(ph.unlock * pct);
+  }, 0);
+
+  const totalActions = SPRINT_PHASES.reduce((s,p) => s + p.actions.length, 0);
+  const doneActions  = SPRINT_PHASES.reduce((s,p) => s + (sprintProgress[p.id]||[]).filter(Boolean).length, 0);
+
+  const weeklyRevenue = revenueLog.length > 0
+    ? revenueLog[revenueLog.length-1]
+    : defaultRevenue();
+  const weekTotal = ["spark","private_sessions","corporate","events","entim"]
+    .reduce((s,k) => s + (Number(weeklyRevenue[k])||0), 0);
+
+  const closedDeals = outreach.filter(o => o.stage === "Closed").length;
+  const pipeline    = outreach.filter(o => !["Closed","Lost"].includes(o.stage)).length;
+
+  return (
+    <div>
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.75rem",marginBottom:"1rem" }}>
+        {[
+          { lbl:"Sprint Progress", val:`${doneActions}/${totalActions}`, sub:`${Math.round(doneActions/totalActions*100)}% complete`, c:C.moss },
+          { lbl:"Revenue Unlocked", val:kes(totalUnlocked), sub:"from completed actions", c:C.gold },
+          { lbl:"Latest Week Revenue", val:kes(weekTotal), sub:`Target: ${kes(TARGETS.monthly)}`, c: weekTotal>=TARGETS.monthly?C.moss:C.clay },
+          { lbl:"Outreach Pipeline", val:`${closedDeals} closed / ${pipeline} active`, sub:"B2B prospects", c:C.ocean },
+        ].map(k=>(
+          <div key={k.lbl} style={S.card(`${k.c}22`)}>
+            <span style={S.lbl}>{k.lbl}</span>
+            <div style={{fontSize:"1.6rem",color:k.c,fontWeight:300,lineHeight:1}}>{k.val}</div>
+            <div style={{fontSize:"0.68rem",color:C.muted,marginTop:"0.3rem"}}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sprint phase progress bars */}
+      <div style={S.card()}>
+        <span style={S.lbl}>Sprint Execution — Phase Progress</span>
+        {SPRINT_PHASES.map(ph=>{
+          const done=(sprintProgress[ph.id]||[]).filter(Boolean).length;
+          const pct=Math.round(done/ph.actions.length*100);
+          return (
+            <div key={ph.id} style={{marginBottom:"0.85rem"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"0.3rem"}}>
+                <span style={{fontSize:"0.78rem",color:ph.color}}>{ph.week} — {ph.phase}</span>
+                <span style={{fontSize:"0.72rem",color:C.muted}}>{done}/{ph.actions.length} · {pct}%</span>
+              </div>
+              <div style={{height:5,background:`${ph.color}18`,borderRadius:3,overflow:"hidden"}}>
+                <div style={{width:`${pct}%`,height:"100%",background:ph.color,borderRadius:3,transition:"width 0.4s"}}/>
+              </div>
+              <div style={{fontSize:"0.65rem",color:C.dim,marginTop:"0.2rem"}}>Revenue unlock: {kes(Math.round(ph.unlock*pct/100))} / {kes(ph.unlock)}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Revenue chart */}
+      {revenueLog.length > 0 && (
+        <div style={S.card()}>
+          <span style={S.lbl}>Weekly Revenue Log</span>
+          <div style={{display:"flex",gap:"0.5rem",alignItems:"flex-end",height:80,marginTop:"0.75rem"}}>
+            {revenueLog.slice(-8).map((r,i)=>{
+              const total=["spark","private_sessions","corporate","events","entim"].reduce((s,k)=>s+(Number(r[k])||0),0);
+              const maxV=Math.max(...revenueLog.slice(-8).map(x=>["spark","private_sessions","corporate","events","entim"].reduce((s,k)=>s+(Number(x[k])||0),0)),TARGETS.monthly);
+              const h=Math.max(4,Math.round((total/maxV)*70));
+              const c=total>=TARGETS.monthly?C.moss:total>0?C.clay:C.dim;
+              return (
+                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"0.25rem"}}>
+                  <div style={{fontSize:"0.55rem",color:c}}>{total>0?kes(total).replace("KES ",""):""}</div>
+                  <div style={{width:"100%",height:h,background:`${c}55`,border:`1px solid ${c}88`,borderRadius:"2px 2px 0 0"}}/>
+                  <div style={{fontSize:"0.55rem",color:C.dim,textAlign:"center"}}>{r.week?.slice(5)||"w"+i}</div>
+                </div>
+              );
+            })}
+            {/* Target line indicator */}
+          </div>
+          <div style={{fontSize:"0.68rem",color:C.muted,marginTop:"0.5rem"}}>Monthly target: <span style={{color:C.gold}}>{kes(TARGETS.monthly)}</span> · Base retainer: <span style={{color:C.moss}}>{kes(TARGETS.base)}</span></div>
+        </div>
+      )}
+
+      {/* Daily briefing */}
+      <div style={S.card(`${C.moss}22`)}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.75rem"}}>
+          <span style={S.lbl}>AURA Daily Briefing</span>
+          <button style={S.btn(C.moss,"sm")} onClick={onBriefing} disabled={briefingLoading}>
+            {briefingLoading?"Generating…":"↻ Refresh"}
+          </button>
+        </div>
+        {briefing
+          ? <div style={{fontSize:"0.8rem",color:C.muted,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{briefing}</div>
+          : <div style={{fontSize:"0.78rem",color:C.dim}}>Click Refresh to generate your AI briefing using live sprint + revenue data.</div>
+        }
+      </div>
+    </div>
+  );
+}
+// ── SPRINT TRACKER ───────────────────────────────────────────────────────────
+function SprintTracker({ sprintProgress, setSprintProgress }) {
+  const toggleAction = (phaseId, idx) => {
+    const current = sprintProgress[phaseId] || new Array(SPRINT_PHASES[phaseId].actions.length).fill(false);
+    const updated = [...current];
+    updated[idx] = !updated[idx];
+    const next = { ...sprintProgress, [phaseId]: updated };
+    setSprintProgress(next);
+    store.set("sprint_progress", next);
+  };
+
+  const totalDone = SPRINT_PHASES.reduce((s,p)=> s+(sprintProgress[p.id]||[]).filter(Boolean).length, 0);
+  const totalAll  = SPRINT_PHASES.reduce((s,p)=> s+p.actions.length, 0);
+  const totalUnlocked = SPRINT_PHASES.reduce((sum,ph)=>{
+    const done=(sprintProgress[ph.id]||[]).filter(Boolean).length;
+    return sum+Math.round(ph.unlock*(done/ph.actions.length));
+  },0);
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.75rem",marginBottom:"1rem"}}>
+        <div style={S.card(`${C.moss}22`)}>
+          <span style={S.lbl}>Actions Completed</span>
+          <div style={{fontSize:"2rem",color:C.moss,fontWeight:300}}>{totalDone} <span style={{fontSize:"1rem",color:C.dim}}>/ {totalAll}</span></div>
+        </div>
+        <div style={S.card(`${C.gold}22`)}>
+          <span style={S.lbl}>Revenue Unlocked</span>
+          <div style={{fontSize:"1.8rem",color:C.gold,fontWeight:300}}>{kes(totalUnlocked)}</div>
+        </div>
+        <div style={S.card(`${C.clay}22`)}>
+          <span style={S.lbl}>Overall Progress</span>
+          <div style={{fontSize:"2rem",color:C.clay,fontWeight:300}}>{Math.round(totalDone/totalAll*100)}<span style={{fontSize:"1rem",color:C.dim}}>%</span></div>
+        </div>
+      </div>
+
+      {SPRINT_PHASES.map(ph=>{
+        const checks = sprintProgress[ph.id] || new Array(ph.actions.length).fill(false);
+        const done = checks.filter(Boolean).length;
+        const pct = Math.round(done/ph.actions.length*100);
+        return (
+          <div key={ph.id} style={S.card(`${ph.color}33`)}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.85rem"}}>
+              <div>
+                <span style={S.lbl}>{ph.week}</span>
+                <div style={{fontSize:"1rem",color:ph.color,letterSpacing:"0.06em"}}>{ph.phase}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:"0.68rem",color:C.dim}}>{done}/{ph.actions.length} done</div>
+                <div style={{fontSize:"1.4rem",color:C.gold,fontWeight:300}}>+{kes(Math.round(ph.unlock*pct/100))}</div>
+                <div style={{fontSize:"0.62rem",color:C.dim}}>of {kes(ph.unlock)} unlocked</div>
+              </div>
+            </div>
+
+            <div style={{height:4,background:`${ph.color}18`,borderRadius:2,overflow:"hidden",marginBottom:"0.85rem"}}>
+              <div style={{width:`${pct}%`,height:"100%",background:ph.color,borderRadius:2,transition:"width 0.3s"}}/>
+            </div>
+
+            {ph.actions.map((action, idx)=>(
+              <div key={idx} onClick={()=>toggleAction(ph.id, idx)}
+                style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",padding:"0.55rem 0",borderBottom:`1px solid rgba(255,255,255,0.04)`,cursor:"pointer",transition:"opacity 0.15s",opacity:checks[idx]?0.6:1}}>
+                <div style={{width:18,height:18,borderRadius:4,border:`1.5px solid ${checks[idx]?ph.color:"rgba(255,255,255,0.15)"}`,background:checks[idx]?`${ph.color}33`:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,fontSize:11,color:ph.color}}>
+                  {checks[idx]?"✓":""}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:"0.8rem",color:checks[idx]?C.dim:C.text,textDecoration:checks[idx]?"line-through":"none"}}>{action}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── REVENUE LOG ──────────────────────────────────────────────────────────────
+function RevenueLog({ revenueLog, setRevenueLog }) {
+  const [form, setForm] = React.useState(defaultRevenue());
+  const [editing, setEditing] = React.useState(null);
+
+  const weekTotal = s => ["spark","private_sessions","corporate","events","entim"].reduce((t,k)=>t+(Number(s[k])||0),0);
+
+  const saveEntry = () => {
+    let updated;
+    if (editing !== null) {
+      updated = revenueLog.map((r,i)=>i===editing?form:r);
+      setEditing(null);
+    } else {
+      updated = [...revenueLog, form];
+    }
+    setRevenueLog(updated);
+    store.set("revenue_log", updated);
+    setForm(defaultRevenue());
+  };
+
+  const deleteEntry = (idx) => {
+    const updated = revenueLog.filter((_,i)=>i!==idx);
+    setRevenueLog(updated);
+    store.set("revenue_log", updated);
+  };
+
+  const editEntry = (idx) => {
+    setForm(revenueLog[idx]);
+    setEditing(idx);
+  };
+
+  const cumulative = revenueLog.reduce((s,r)=>s+weekTotal(r),0);
+  const avgWeekly = revenueLog.length>0 ? Math.round(cumulative/revenueLog.length) : 0;
+  const projected = avgWeekly * 4;
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.75rem",marginBottom:"1rem"}}>
+        {[
+          {lbl:"Total Logged",val:kes(cumulative),c:C.gold},
+          {lbl:"Avg Weekly",val:kes(avgWeekly),c:C.moss},
+          {lbl:"Projected Monthly",val:kes(projected),c:projected>=TARGETS.monthly?C.moss:C.clay},
+          {lbl:"ZENVIA Target",val:kes(TARGETS.monthly),c:C.dim},
+        ].map(k=>(
+          <div key={k.lbl} style={S.card(`${k.c}22`)}>
+            <span style={S.lbl}>{k.lbl}</span>
+            <div style={{fontSize:"1.6rem",color:k.c,fontWeight:300}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Entry form */}
+      <div style={S.card(`${C.moss}22`)}>
+        <span style={S.lbl}>{editing!==null?"Edit Entry":"Log This Week's Revenue"}</span>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 3fr",gap:"0.5rem",marginBottom:"0.5rem"}}>
+          <div>
+            <span style={S.lbl}>Date / Week</span>
+            <input style={S.inp} type="date" value={form.week} onChange={e=>setForm({...form,week:e.target.value})}/>
+          </div>
+          <div>
+            <span style={S.lbl}>Notes</span>
+            <input style={S.inp} placeholder="e.g. event week" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"0.5rem",marginBottom:"0.75rem"}}>
+          {[
+            {key:"spark",label:"SPARK Studio"},
+            {key:"private_sessions",label:"Dr. Alia Private"},
+            {key:"corporate",label:"Corporate"},
+            {key:"events",label:"Events"},
+            {key:"entim",label:"Entim Sidai"},
+          ].map(f=>(
+            <div key={f.key}>
+              <span style={S.lbl}>{f.label} (KES)</span>
+              <input style={S.inp} type="number" min="0" placeholder="0"
+                value={form[f.key]||""} onChange={e=>setForm({...form,[f.key]:Number(e.target.value)})}/>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:"0.5rem",alignItems:"center"}}>
+          <button style={S.btn(C.moss)} onClick={saveEntry}>{editing!==null?"Update Entry":"Add Entry"}</button>
+          {editing!==null && <button style={S.btn(C.dim)} onClick={()=>{setEditing(null);setForm(defaultRevenue());}}>Cancel</button>}
+          <span style={{fontSize:"0.75rem",color:C.gold,marginLeft:"auto"}}>Week total: {kes(weekTotal(form))}</span>
+        </div>
+      </div>
+
+      {/* Log table */}
+      {revenueLog.length > 0 && (
+        <div style={S.card()}>
+          <span style={S.lbl}>Revenue History</span>
+          {[...revenueLog].reverse().map((r,ri)=>{
+            const idx = revenueLog.length-1-ri;
+            const total = weekTotal(r);
+            return (
+              <div key={idx} style={{display:"grid",gridTemplateColumns:"100px 1fr repeat(5,80px) auto auto",gap:"0.5rem",alignItems:"center",padding:"0.5rem 0",borderBottom:`1px solid rgba(255,255,255,0.04)`,fontSize:"0.75rem"}}>
+                <span style={{color:C.clay}}>{r.week}</span>
+                <span style={{color:C.muted,fontSize:"0.68rem"}}>{r.notes}</span>
+                {["spark","private_sessions","corporate","events","entim"].map(k=>(
+                  <span key={k} style={{color:Number(r[k])>0?C.text:C.dim,textAlign:"right"}}>{Number(r[k])>0?kes(r[k]).replace("KES ",""):"-"}</span>
+                ))}
+                <span style={{color:C.gold,fontWeight:600,textAlign:"right"}}>{kes(total)}</span>
+                <div style={{display:"flex",gap:"0.3rem"}}>
+                  <button style={S.btn(C.ocean,"sm")} onClick={()=>editEntry(idx)}>Edit</button>
+                  <button style={S.btn(C.red,"sm")} onClick={()=>deleteEntry(idx)}>✕</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+// ── AI OPERATIONS ─────────────────────────────────────────────────────────────
+function AIOps({ apiKey }) {
+  const [loading, setLoading] = React.useState({});
+  const [outputs, setOutputs] = React.useState({});
+  const [inputs, setInputs] = React.useState({ topic:"breathwork for stress relief", format:"Carousel", segment:"all", company:"Radisson Blu Nairobi", period:"weekly" });
+
+  const callClaude = async (id, system, prompt) => {
+    if (!apiKey) { setOutputs(o=>({...o,[id]:"⚠️ Add your Anthropic API key in Settings first."})); return; }
+    setLoading(l=>({...l,[id]:true}));
+    setOutputs(o=>({...o,[id]:""}));
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:800, system, messages:[{role:"user",content:prompt}] })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text || data.error?.message || "Error";
+      setOutputs(o=>({...o,[id]:text}));
+    } catch(e) { setOutputs(o=>({...o,[id]:"Error: "+e.message})); }
+    setLoading(l=>({...l,[id]:false}));
+  };
+
+  const ops = [
+    {
+      id:"post", icon:"✦", color:C.clay, label:"Generate Instagram Post",
+      description:"BLOOM: AI-written caption + hashtags + visual brief for ENSO",
+      system:"You are BLOOM, the social content agent for ENSO Holistic Wellness, Nairobi. Brand voice: warm, grounded, nature-inspired. Never clinical. Never make medical claims. Mix broad wellness hashtags with Nairobi-specific ones (#NairobiWellness #ENSOHolistic).",
+      prompt:()=>`Generate a complete Instagram ${inputs.format} post for ENSO Holistic Wellness.\nTopic: ${inputs.topic}\n\nReturn:\n1. Caption (150-200 words with emojis and line breaks)\n2. 25 hashtags\n3. Visual brief for the graphic\n4. Best posting time (EAT)`,
+      controls: (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.5rem",marginBottom:"0.75rem"}}>
+          <div><span style={S.lbl}>Topic</span><input style={S.inp} value={inputs.topic} onChange={e=>setInputs(i=>({...i,topic:e.target.value}))}/></div>
+          <div><span style={S.lbl}>Format</span>
+            <select style={S.inp} value={inputs.format} onChange={e=>setInputs(i=>({...i,format:e.target.value}))}>
+              {["Reel","Carousel","Story","Single"].map(f=><option key={f}>{f}</option>)}
+            </select>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id:"broadcast", icon:"⬡", color:C.ocean, label:"Draft WhatsApp Broadcast",
+      description:"PULSE: Ready-to-send broadcast for ENSO community (includes opt-out line)",
+      system:"You are PULSE, the WhatsApp community manager for ENSO Holistic Wellness, Nairobi. Tone: warm, personal, like a trusted wellness friend. Max 300 characters for broadcasts. Always include: 'Reply STOP to unsubscribe'. Location: SPARK Studio, Jaffery Sports Club, Lavington.",
+      prompt:()=>`Write a WhatsApp broadcast message for ENSO Holistic Wellness.\nTopic: ${inputs.topic}\nAudience: ${inputs.segment} clients\n\nReturn:\n1. Main broadcast message (max 300 chars)\n2. Follow-up message if no booking in 48h (max 150 chars)\n3. Suggested send time (EAT)`,
+      controls: (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.5rem",marginBottom:"0.75rem"}}>
+          <div><span style={S.lbl}>Topic / Promo</span><input style={S.inp} value={inputs.topic} onChange={e=>setInputs(i=>({...i,topic:e.target.value}))}/></div>
+          <div><span style={S.lbl}>Audience Segment</span>
+            <select style={S.inp} value={inputs.segment} onChange={e=>setInputs(i=>({...i,segment:e.target.value}))}>
+              {["all","booked","vip","lapsed","new enquiries"].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id:"outreach", icon:"◯", color:"#7A8B6F", label:"Draft Corporate Outreach Email",
+      description:"REACH: Cold email + 3-day follow-up sequence for hotel/corporate wellness",
+      system:"You are REACH, the B2B partnerships agent for ZENVIA Services representing ENSO Holistic Wellness. Target: Nairobi 4-5 star hotels, CBD corporates. USP: Dr. Alia Datoo's credentials, flexible on-site delivery. Per email-marketing best practice: subject under 50 chars, body max 150 words, one CTA only.",
+      prompt:()=>`Draft a cold outreach email for ENSO Holistic Wellness / ZENVIA Services.\nTarget company: ${inputs.company}\nOpportunity: Corporate wellness program / hotel wellness partnership\n\nReturn:\n1. Subject line (under 50 chars)\n2. Email body (max 150 words, warm, value-first)\n3. Day-3 follow-up (max 80 words)\n4. Day-7 final follow-up (different angle, max 80 words)`,
+      controls: (
+        <div style={{marginBottom:"0.75rem"}}>
+          <span style={S.lbl}>Target Company</span>
+          <input style={S.inp} value={inputs.company} onChange={e=>setInputs(i=>({...i,company:e.target.value}))} placeholder="e.g. Radisson Blu Nairobi, Safaricom PLC"/>
+        </div>
+      ),
+    },
+    {
+      id:"reel", icon:"▶", color:C.ocean, label:"Generate Reel Script",
+      description:"FRAME: Hook→Value→CTA script + EdgeTTS narration text + visual notes",
+      system:"You are FRAME, the video production agent for ENSO Holistic Wellness. Structure: Hook (2s grabs attention) → Context → Value → CTA. Subtitles mandatory. Brand: warm tones, nature visuals, slow pacing. For Instagram Reels and YouTube Shorts.",
+      prompt:()=>`Write a 30-second Instagram Reel script for ENSO Holistic Wellness.\nTopic: ${inputs.topic}\n\nReturn:\n1. Hook (2 seconds — must grab immediately)\n2. Main content (3 punchy points)\n3. CTA (last 3 seconds)\n4. Full TTS narration script for EdgeTTS\n5. Visual direction notes (3 scenes)\n6. On-screen text overlays`,
+      controls: (
+        <div style={{marginBottom:"0.75rem"}}>
+          <span style={S.lbl}>Topic</span>
+          <input style={S.inp} value={inputs.topic} onChange={e=>setInputs(i=>({...i,topic:e.target.value}))} placeholder="e.g. benefits of breathwork for stress"/>
+        </div>
+      ),
+    },
+    {
+      id:"report", icon:"▣", color:C.stone, label:"Generate Financial Report",
+      description:"LEDGE: Weekly P&L summary + ZENVIA target progress + practitioner payouts",
+      system:"You are LEDGE, the financial reporting agent for ZENVIA Services / ENSO Holistic Wellness. Report in KES. ZENVIA target: KES 35,000 base + KES 5,000 growth. SPARK: 50% commission model. Always flag variance vs targets. All payouts require human sign-off.",
+      prompt:()=>`Generate a ${inputs.period} financial report for ENSO Holistic Wellness.\n\nInclude:\n1. Revenue summary by stream\n2. SPARK session fill-rate estimate\n3. Practitioner commission calculations (50% model)\n4. ZENVIA retainer progress vs KES 40,000 target\n5. Top 3 revenue actions for next week\n6. Any flags or anomalies`,
+      controls: (
+        <div style={{marginBottom:"0.75rem"}}>
+          <span style={S.lbl}>Period</span>
+          <select style={S.inp} value={inputs.period} onChange={e=>setInputs(i=>({...i,period:e.target.value}))}>
+            {["weekly","monthly","quarterly"].map(p=><option key={p}>{p}</option>)}
+          </select>
+        </div>
+      ),
+    },
+    {
+      id:"intel", icon:"◉", color:"#7B8B7A", label:"Market Intelligence Brief",
+      description:"SCOUT: Wellness trends, competitor moves, and Nairobi opportunities this week",
+      system:"You are SCOUT, the market intelligence agent for ZENVIA Services. Monitor Nairobi wellness market, Instagram trends, competitor activity, hotel/corporate wellness opportunities. Output: concise, actionable. Always identify what ENSO can do THIS WEEK.",
+      prompt:()=>`Generate a weekly wellness market intelligence brief for ENSO Holistic Wellness, Nairobi.\nDate: ${today()}\n\nReturn:\n1. Top 3 wellness content trends on Instagram right now\n2. Nairobi competitor observations (2 insights)\n3. Corporate wellness opportunity in Nairobi this week\n4. Hotel/hospitality wellness gap ENSO can fill\n5. One viral content format to replicate immediately\n6. Priority action for Derrick this week`,
+      prompt:()=>`Generate a weekly wellness market intelligence brief for ENSO Holistic Wellness, Nairobi.\n\nReturn:\n1. Top 3 wellness content trends\n2. Competitor observations\n3. Corporate opportunity\n4. Hotel/hospitality gap\n5. Viral format to replicate\n6. Priority action this week`,
+      controls: null,
+    },
+    {
+      id:"hashtags", icon:"↑", color:C.moss, label:"Research Hashtag Strategy",
+      description:"GROWTH: Tiered hashtag sets for ENSO Instagram — rotate per post",
+      system:"You are GROWTH, the Instagram growth agent for ENSO Holistic Wellness. Per instagram-growth-automation skill: tiered hashtag mix. Account size: ~500 followers. Focus: Nairobi + Kenya wellness hashtags + global wellness reach. Never repeat exact same set on consecutive posts.",
+      prompt:()=>`Create a complete Instagram hashtag strategy for ENSO Holistic Wellness, Nairobi.\nNiche: holistic wellness, breathwork, sound healing, movement\nAccount size: ~500 followers\n\nReturn:\n1. Set A (5 large: 1M+ posts)\n2. Set B (8 medium: 100K–1M)\n3. Set C (8 niche: Nairobi/Kenya specific)\n4. Set D (4 branded/micro)\n5. Rotation strategy (which sets to swap each post)\n6. 3 ready-to-paste hashtag blocks (25 each)`,
+      controls: null,
+    },
+  ];
+
+  return (
+    <div>
+      <div style={S.card(`${C.gold}22`)}>
+        <span style={S.lbl}>AURA Agent Operations — Claude API Powered</span>
+        <div style={{fontSize:"0.78rem",color:C.muted,lineHeight:1.6}}>
+          Each action calls Claude directly. Outputs are ready to use — copy to WhatsApp, Instagram, email, or your booking system.
+          {!apiKey && <span style={{color:C.clay}}> Add your API key in Settings to activate.</span>}
+        </div>
+      </div>
+
+      {ops.map(op=>(
+        <div key={op.id} style={S.card(`${op.color}22`)}>
+          <div style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",marginBottom:"0.85rem"}}>
+            <div style={{width:36,height:36,borderRadius:7,background:`${op.color}18`,border:`1px solid ${op.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,color:op.color,flexShrink:0}}>{op.icon}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:"0.9rem",color:C.text,letterSpacing:"0.05em"}}>{op.label}</div>
+              <div style={{fontSize:"0.68rem",color:C.muted,marginTop:"0.15rem"}}>{op.description}</div>
+            </div>
+            <button style={S.btn(op.color)} onClick={()=>callClaude(op.id, op.system, op.prompt())} disabled={loading[op.id]}>
+              {loading[op.id]?"Running…":"▶ Run"}
+            </button>
+          </div>
+          {op.controls}
+          {outputs[op.id] && (
+            <div style={{background:"rgba(0,0,0,0.3)",borderRadius:5,padding:"0.85rem",fontSize:"0.77rem",color:"#b8b3a8",lineHeight:1.75,whiteSpace:"pre-wrap",maxHeight:320,overflowY:"auto",border:`1px solid ${op.color}22`,position:"relative"}}>
+              <button onClick={()=>navigator.clipboard?.writeText(outputs[op.id])}
+                style={{...S.btn(op.color,"sm"),position:"absolute",top:"0.5rem",right:"0.5rem"}}>Copy</button>
+              {outputs[op.id]}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+// ── OUTREACH PIPELINE ─────────────────────────────────────────────────────────
+function OutreachPipeline({ outreach, setOutreach }) {
+  const [form, setForm] = React.useState(defaultProspect());
+  const [editing, setEditing] = React.useState(null);
+  const [showForm, setShowForm] = React.useState(false);
+
+  const save = () => {
+    const updated = editing !== null
+      ? outreach.map((o,i) => i===editing ? form : o)
+      : [...outreach, {...form, id:Date.now()}];
+    setOutreach(updated);
+    store.set("outreach", updated);
+    setForm(defaultProspect());
+    setEditing(null);
+    setShowForm(false);
+  };
+
+  const remove = (idx) => {
+    const updated = outreach.filter((_,i)=>i!==idx);
+    setOutreach(updated);
+    store.set("outreach", updated);
+  };
+
+  const moveStage = (idx, dir) => {
+    const stages = OUTREACH_STAGES;
+    const current = outreach[idx].stage;
+    const ci = stages.indexOf(current);
+    const ni = Math.max(0, Math.min(stages.length-1, ci+dir));
+    const updated = outreach.map((o,i) => i===idx ? {...o, stage:stages[ni]} : o);
+    setOutreach(updated);
+    store.set("outreach", updated);
+  };
+
+  const totalPipelineValue = outreach
+    .filter(o=>!["Closed","Lost"].includes(o.stage))
+    .reduce((s,o)=>s+(Number(o.value)||0),0);
+  const closedValue = outreach.filter(o=>o.stage==="Closed").reduce((s,o)=>s+(Number(o.value)||0),0);
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.75rem",marginBottom:"1rem"}}>
+        {[
+          {lbl:"Total Prospects",val:outreach.length,c:C.ocean},
+          {lbl:"Active Pipeline",val:outreach.filter(o=>!["Closed","Lost"].includes(o.stage)).length,c:C.clay},
+          {lbl:"Pipeline Value",val:kes(totalPipelineValue)+"/mo",c:C.gold},
+          {lbl:"Closed Revenue",val:kes(closedValue)+"/mo",c:C.moss},
+        ].map(k=>(
+          <div key={k.lbl} style={S.card(`${k.c}22`)}>
+            <span style={S.lbl}>{k.lbl}</span>
+            <div style={{fontSize:"1.6rem",color:k.c,fontWeight:300}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.75rem"}}>
+        <span style={{fontSize:"0.78rem",color:C.muted}}>Track every hotel, corporate, and vendor prospect</span>
+        <button style={S.btn(C.moss)} onClick={()=>{setShowForm(!showForm);setEditing(null);setForm(defaultProspect());}}>
+          {showForm?"Cancel":"+ Add Prospect"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{...S.card(`${C.moss}22`),marginBottom:"1rem"}}>
+          <span style={S.lbl}>{editing!==null?"Edit Prospect":"New Prospect"}</span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.5rem"}}>
+            <div><span style={S.lbl}>Company</span><input style={S.inp} value={form.company} onChange={e=>setForm(f=>({...f,company:e.target.value}))} placeholder="e.g. Radisson Blu"/></div>
+            <div><span style={S.lbl}>Contact Name</span><input style={S.inp} value={form.contact} onChange={e=>setForm(f=>({...f,contact:e.target.value}))} placeholder="e.g. HR Manager"/></div>
+            <div><span style={S.lbl}>Type</span>
+              <select style={S.inp} value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
+                {["Corporate","Hotel","Event Venue","Vendor","Other"].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div><span style={S.lbl}>Stage</span>
+              <select style={S.inp} value={form.stage} onChange={e=>setForm(f=>({...f,stage:e.target.value}))}>
+                {OUTREACH_STAGES.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div><span style={S.lbl}>Est. Monthly Value (KES)</span><input style={S.inp} type="number" min="0" value={form.value} onChange={e=>setForm(f=>({...f,value:Number(e.target.value)}))}/></div>
+            <div><span style={S.lbl}>Date</span><input style={S.inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
+          </div>
+          <div style={{marginTop:"0.5rem"}}><span style={S.lbl}>Notes</span><input style={S.inp} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Any notes, next steps..."/></div>
+          <button style={{...S.btn(C.moss),marginTop:"0.5rem"}} onClick={save}>{editing!==null?"Update":"Add to Pipeline"}</button>
+        </div>
+      )}
+
+      {/* Kanban-style view grouped by stage */}
+      {OUTREACH_STAGES.map(stage=>{
+        const items = outreach.filter(o=>o.stage===stage);
+        if (items.length===0) return null;
+        const sc = STAGE_COLORS[stage]||C.dim;
+        return (
+          <div key={stage} style={{marginBottom:"1rem"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.5rem"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:sc}}/>
+              <span style={{fontSize:"0.72rem",color:sc,letterSpacing:"0.1em",textTransform:"uppercase"}}>{stage}</span>
+              <span style={{fontSize:"0.65rem",color:C.dim}}>({items.length})</span>
+              {stage!=="Lost" && <span style={{fontSize:"0.65rem",color:C.gold,marginLeft:"auto"}}>{kes(items.reduce((s,o)=>s+(Number(o.value)||0),0))}/mo</span>}
+            </div>
+            {items.map((p,pi)=>{
+              const idx = outreach.indexOf(p);
+              return (
+                <div key={p.id} style={{...S.card(`${sc}22`),display:"grid",gridTemplateColumns:"1fr auto",gap:"0.75rem",alignItems:"center"}}>
+                  <div>
+                    <div style={{display:"flex",gap:"0.5rem",alignItems:"center",marginBottom:"0.2rem"}}>
+                      <span style={{fontSize:"0.85rem",color:C.text}}>{p.company}</span>
+                      <span style={S.tag(sc)}>{p.type}</span>
+                      {p.value>0 && <span style={{fontSize:"0.72rem",color:C.gold,marginLeft:"auto"}}>{kes(p.value)}/mo</span>}
+                    </div>
+                    {p.contact && <div style={{fontSize:"0.7rem",color:C.muted}}>Contact: {p.contact}</div>}
+                    {p.notes && <div style={{fontSize:"0.68rem",color:C.dim,marginTop:"0.2rem"}}>{p.notes}</div>}
+                    <div style={{fontSize:"0.62rem",color:C.dim}}>{p.date}</div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:"0.3rem"}}>
+                    <div style={{display:"flex",gap:"0.3rem"}}>
+                      <button style={S.btn(C.ocean,"sm")} onClick={()=>moveStage(idx,-1)}>←</button>
+                      <button style={S.btn(C.moss,"sm")} onClick={()=>moveStage(idx,1)}>→</button>
+                    </div>
+                    <button style={S.btn(C.clay,"sm")} onClick={()=>{setForm(p);setEditing(idx);setShowForm(true);}}>Edit</button>
+                    <button style={S.btn(C.red,"sm")} onClick={()=>remove(idx)}>✕</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+      {outreach.length===0 && <div style={{...S.card(),color:C.dim,fontSize:"0.8rem",textAlign:"center"}}>No prospects yet. Click "+ Add Prospect" to start your B2B pipeline.</div>}
+    </div>
+  );
+}
+// ── CONTENT CALENDAR ──────────────────────────────────────────────────────────
+function ContentCalendar({ content, setContent }) {
+  const [form, setForm] = React.useState(defaultPost());
+  const [showForm, setShowForm] = React.useState(false);
+  const [editing, setEditing] = React.useState(null);
+  const STATUS_COLORS = { "Planned":C.dim,"Drafted":C.ocean,"Ready":C.clay,"Posted":C.moss,"Skipped":C.red };
+
+  const save = () => {
+    const updated = editing!==null
+      ? content.map((c,i)=>i===editing?form:c)
+      : [...content,{...form,id:Date.now()}];
+    setContent(updated);
+    store.set("content",updated);
+    setForm(defaultPost());
+    setEditing(null);
+    setShowForm(false);
+  };
+
+  const remove = idx => {
+    const updated = content.filter((_,i)=>i!==idx);
+    setContent(updated);
+    store.set("content",updated);
+  };
+
+  const cycleStatus = idx => {
+    const statuses = Object.keys(STATUS_COLORS);
+    const ci = statuses.indexOf(content[idx].status);
+    const ni = (ci+1)%statuses.length;
+    const updated = content.map((c,i)=>i===idx?{...c,status:statuses[ni]}:c);
+    setContent(updated);
+    store.set("content",updated);
+  };
+
+  const posted = content.filter(c=>c.status==="Posted").length;
+  const ready  = content.filter(c=>c.status==="Ready").length;
+  const drafted= content.filter(c=>c.status==="Drafted").length;
+  const planned= content.filter(c=>c.status==="Planned").length;
+  const sorted = [...content].sort((a,b)=>a.date.localeCompare(b.date));
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"0.75rem",marginBottom:"1rem"}}>
+        {[
+          {lbl:"Posted",val:posted,c:C.moss},{lbl:"Ready to Post",val:ready,c:C.clay},
+          {lbl:"In Draft",val:drafted,c:C.ocean},{lbl:"Planned",val:planned,c:C.dim},
+        ].map(k=>(
+          <div key={k.lbl} style={S.card(`${k.c}22`)}>
+            <span style={S.lbl}>{k.lbl}</span>
+            <div style={{fontSize:"2rem",color:k.c,fontWeight:300}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.75rem"}}>
+        <span style={{fontSize:"0.78rem",color:C.muted}}>Plan → Draft → Ready → Posted. Click status to advance.</span>
+        <button style={S.btn(C.moss)} onClick={()=>{setShowForm(!showForm);setEditing(null);setForm(defaultPost());}}>
+          {showForm?"Cancel":"+ Add Post"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{...S.card(`${C.clay}22`),marginBottom:"1rem"}}>
+          <span style={S.lbl}>{editing!==null?"Edit Post":"New Post"}</span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"0.5rem",marginBottom:"0.5rem"}}>
+            <div><span style={S.lbl}>Date</span><input style={S.inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
+            <div><span style={S.lbl}>Format</span>
+              <select style={S.inp} value={form.format} onChange={e=>setForm(f=>({...f,format:e.target.value}))}>
+                {CONTENT_FORMATS.map(x=><option key={x}>{x}</option>)}
+              </select>
+            </div>
+            <div><span style={S.lbl}>Pillar</span>
+              <select style={S.inp} value={form.pillar} onChange={e=>setForm(f=>({...f,pillar:e.target.value}))}>
+                {CONTENT_PILLARS.map(x=><option key={x}>{x}</option>)}
+              </select>
+            </div>
+            <div><span style={S.lbl}>Status</span>
+              <select style={S.inp} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+                {Object.keys(STATUS_COLORS).map(x=><option key={x}>{x}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{marginBottom:"0.5rem"}}><span style={S.lbl}>Topic / Idea</span><input style={S.inp} value={form.topic} onChange={e=>setForm(f=>({...f,topic:e.target.value}))} placeholder="e.g. 5 breathwork benefits for busy professionals"/></div>
+          <div><span style={S.lbl}>Caption Notes</span><textarea style={{...S.inp,height:60,resize:"vertical"}} value={form.caption} onChange={e=>setForm(f=>({...f,caption:e.target.value}))} placeholder="Draft caption or key points..."/></div>
+          <button style={{...S.btn(C.clay),marginTop:"0.5rem"}} onClick={save}>{editing!==null?"Update":"Add Post"}</button>
+        </div>
+      )}
+
+      {/* Content list */}
+      {sorted.length===0
+        ? <div style={{...S.card(),color:C.dim,fontSize:"0.8rem",textAlign:"center"}}>No posts planned yet. Add your first post to start the content calendar.</div>
+        : sorted.map((post)=>{
+            const idx = content.indexOf(post);
+            const sc = STATUS_COLORS[post.status]||C.dim;
+            return (
+              <div key={post.id} style={{...S.card(`${sc}22`),display:"grid",gridTemplateColumns:"90px 80px 130px 1fr auto",gap:"0.75rem",alignItems:"center"}}>
+                <span style={{fontSize:"0.75rem",color:C.clay}}>{post.date}</span>
+                <span style={S.tag(C.ocean)}>{post.format}</span>
+                <span style={S.tag(C.stone)}>{post.pillar}</span>
+                <div>
+                  <div style={{fontSize:"0.8rem",color:C.text}}>{post.topic||<span style={{color:C.dim}}>No topic</span>}</div>
+                  {post.caption&&<div style={{fontSize:"0.68rem",color:C.muted,marginTop:"0.15rem"}}>{post.caption.slice(0,80)}{post.caption.length>80?"…":""}</div>}
+                </div>
+                <div style={{display:"flex",gap:"0.35rem",alignItems:"center"}}>
+                  <button onClick={()=>cycleStatus(idx)} style={S.tag(sc)}>{post.status}</button>
+                  <button style={S.btn(C.ocean,"sm")} onClick={()=>{setForm(post);setEditing(idx);setShowForm(true);}}>Edit</button>
+                  <button style={S.btn(C.red,"sm")} onClick={()=>remove(idx)}>✕</button>
+                </div>
+              </div>
+            );
+          })
+      }
+    </div>
+  );
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+function Settings({ apiKey, setApiKey }) {
+  const [key, setKey] = React.useState(apiKey);
+  const [showKey, setShowKey] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  const save = () => {
+    setApiKey(key);
+    store.set("anthropic_key", key);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  const clearAll = () => {
+    if (window.confirm("Clear ALL data? This cannot be undone.")) {
+      ["sprint_progress","revenue_log","outreach","content","anthropic_key"].forEach(k=>localStorage.removeItem(k));
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div>
+      <div style={S.card(`${C.moss}22`)}>
+        <span style={S.lbl}>Anthropic API Key</span>
+        <div style={{fontSize:"0.78rem",color:C.muted,marginBottom:"0.75rem",lineHeight:1.6}}>
+          Required for AI Operations (post generation, broadcasts, outreach drafts, reports).
+          Get yours at <span style={{color:C.clay}}>console.anthropic.com</span> → API Keys.
+          Stored locally in your browser only.
+        </div>
+        <div style={{display:"flex",gap:"0.5rem",marginBottom:"0.5rem"}}>
+          <input
+            style={{...S.inp,marginBottom:0,flex:1,fontFamily:"monospace",fontSize:"0.75rem"}}
+            type={showKey?"text":"password"}
+            value={key}
+            onChange={e=>setKey(e.target.value)}
+            placeholder="sk-ant-..."
+          />
+          <button style={S.btn(C.dim,"sm")} onClick={()=>setShowKey(!showKey)}>{showKey?"Hide":"Show"}</button>
+        </div>
+        <div style={{display:"flex",gap:"0.5rem",alignItems:"center"}}>
+          <button style={S.btn(C.moss)} onClick={save}>Save Key</button>
+          {saved && <span style={{fontSize:"0.72rem",color:C.moss}}>✓ Saved</span>}
+          {apiKey && <span style={{fontSize:"0.72rem",color:C.moss,marginLeft:"auto"}}>✓ Key active — AI Operations enabled</span>}
+        </div>
+      </div>
+
+      <div style={S.card()}>
+        <span style={S.lbl}>Business Config</span>
+        <div style={{fontSize:"0.8rem",color:C.muted,lineHeight:1.7}}>
+          <div style={{display:"grid",gridTemplateColumns:"180px 1fr",gap:"0.5rem 1rem"}}>
+            {[
+              ["Operator","Derrick Mulima — ZENVIA Services"],
+              ["Client","ENSO Holistic Wellness"],
+              ["Lead Practitioner","Dr. Alia Datoo"],
+              ["Studio","SPARK Wellness Studio, Jaffery Sports Club, Lavington, Nairobi"],
+              ["Commission Model","50% to practitioners / 50% retained"],
+              ["ZENVIA Base Retainer","KES 35,000/month"],
+              ["Growth Target","+ KES 5,000/month (events, partnerships)"],
+              ["Booking URL","ensokenya.com/enso-spark"],
+              ["AURA Version","v2.0 — 10 agents, 6,210 skills"],
+            ].map(([k,v])=>(
+              <React.Fragment key={k}>
+                <span style={{color:C.dim}}>{k}</span>
+                <span style={{color:C.text}}>{v}</span>
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={S.card()}>
+        <span style={S.lbl}>Data & Storage</span>
+        <div style={{fontSize:"0.78rem",color:C.muted,marginBottom:"0.75rem",lineHeight:1.6}}>
+          All data is stored in your browser's localStorage. Nothing is sent to any server except direct Claude API calls when you use AI Operations.
+        </div>
+        <div style={{display:"flex",gap:"0.5rem"}}>
+          <button style={S.btn(C.ocean,"sm")} onClick={()=>{
+            const data={sprint_progress:store.get("sprint_progress",{}),revenue_log:store.get("revenue_log",[]),outreach:store.get("outreach",[]),content:store.get("content",[])};
+            const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+            const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+            a.download=`zenvia-backup-${today()}.json`;a.click();
+          }}>Export Backup</button>
+          <button style={S.btn(C.red,"sm")} onClick={clearAll}>Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── MAIN APP ─────────────────────────────────────────────────────────────────
+const NAVS = [
+  { id:"dashboard",  label:"Dashboard",   icon:"◎" },
+  { id:"sprint",     label:"Sprint",      icon:"⚑" },
+  { id:"revenue",    label:"Revenue",     icon:"▣" },
+  { id:"aiops",      label:"AI Ops",      icon:"◈" },
+  { id:"outreach",   label:"Outreach",    icon:"◯" },
+  { id:"content",    label:"Content",     icon:"✦" },
+  { id:"settings",   label:"Settings",    icon:"⚙" },
+];
+
+function App() {
+  const [page, setPage]                     = React.useState("dashboard");
+  const [apiKey, setApiKey]                 = React.useState(()=>store.get("anthropic_key",""));
+  const [sprintProgress, setSprintProgress] = React.useState(()=>store.get("sprint_progress",{}));
+  const [revenueLog, setRevenueLog]         = React.useState(()=>store.get("revenue_log",[]));
+  const [outreach, setOutreach]             = React.useState(()=>store.get("outreach",[]));
+  const [content, setContent]               = React.useState(()=>store.get("content",[]));
+  const [briefing, setBriefing]             = React.useState("");
+  const [briefingLoading, setBriefingLoading] = React.useState(false);
+
+  const totalDone  = SPRINT_PHASES.reduce((s,p)=>s+(sprintProgress[p.id]||[]).filter(Boolean).length,0);
+  const totalAll   = SPRINT_PHASES.reduce((s,p)=>s+p.actions.length,0);
+  const weekRevenue = revenueLog.length>0
+    ? ["spark","private_sessions","corporate","events","entim"].reduce((s,k)=>s+(Number(revenueLog[revenueLog.length-1][k])||0),0)
+    : 0;
+
+  const generateBriefing = async () => {
+    if (!apiKey) { setBriefing("⚠️ Add your Anthropic API key in Settings to enable daily briefings."); return; }
+    setBriefingLoading(true);
+    const doneActions = SPRINT_PHASES.flatMap(ph=>
+      ph.actions.filter((_,i)=>(sprintProgress[ph.id]||[])[i])
+    );
+    const closedDeals = outreach.filter(o=>o.stage==="Closed").map(o=>o.company);
+    const activeDeals = outreach.filter(o=>!["Closed","Lost"].includes(o.stage)).map(o=>`${o.company} (${o.stage})`);
+    const lastRevenue = revenueLog.slice(-2);
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:500,
+          system:"You are AURA Core, the AI operations brain for ZENVIA Services / ENSO Holistic Wellness, Nairobi. You report to Derrick Mulima. Be concise, direct, and specific — like a sharp COO briefing a founder. Use KES for money.",
+          messages:[{role:"user",content:`Generate today's operations briefing.\n\nSprint: ${totalDone}/${totalAll} actions complete\nLast week revenue: KES ${weekRevenue.toLocaleString()}\nTarget: KES 40,000/month\nCompleted actions: ${doneActions.slice(-5).join(", ")||"none yet"}\nActive pipeline: ${activeDeals.join(", ")||"none"}\nClosed deals: ${closedDeals.join(", ")||"none"}\nContent posted this week: ${content.filter(c=>c.status==="Posted").length}\n\nFormat:\n1. System health (1 sentence)\n2. Top 3 wins this week\n3. 3 things needing attention\n4. Single most important action today\n5. Revenue projection this month`}]
+        })
+      });
+      const data = await res.json();
+      setBriefing(data.content?.[0]?.text || "Error generating briefing");
+    } catch(e){ setBriefing("Error: "+e.message); }
+    setBriefingLoading(false);
+  };
+
+  return (
+    <div style={{fontFamily:"Georgia,'Times New Roman',serif",background:C.bg,minHeight:"100vh",color:C.text,display:"flex"}}>
+      {/* Sidebar */}
+      <div style={{width:190,background:"rgba(0,0,0,0.4)",borderRight:"1px solid rgba(124,154,110,0.15)",display:"flex",flexDirection:"column",padding:"1.25rem 0",position:"fixed",top:0,left:0,bottom:0}}>
+        <div style={{padding:"0 1.1rem 1.1rem",borderBottom:"1px solid rgba(124,154,110,0.12)",marginBottom:"0.5rem"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"0.6rem"}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle at 35% 35%,#8fba7a,#4a6b3e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>◎</div>
+            <div>
+              <div style={{fontSize:"0.88rem",letterSpacing:"0.1em",color:C.text}}>ZENVIA</div>
+              <div style={{fontSize:"0.55rem",color:C.dim,letterSpacing:"0.08em"}}>Operations System</div>
+            </div>
+          </div>
+          {/* Progress pill */}
+          <div style={{marginTop:"0.85rem",background:`${C.moss}0f`,borderRadius:5,padding:"0.5rem 0.6rem",border:`1px solid ${C.moss}22`}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"0.25rem"}}>
+              <span style={{fontSize:"0.58rem",color:C.moss,letterSpacing:"0.12em"}}>SPRINT</span>
+              <span style={{fontSize:"0.62rem",color:C.gold}}>{Math.round(totalDone/totalAll*100)}%</span>
+            </div>
+            <div style={{height:3,background:`${C.moss}18`,borderRadius:2}}>
+              <div style={{width:`${Math.round(totalDone/totalAll*100)}%`,height:"100%",background:C.moss,borderRadius:2,transition:"width 0.3s"}}/>
+            </div>
+          </div>
+        </div>
+
+        <nav style={{flex:1,overflowY:"auto"}}>
+          {NAVS.map(n=>(
+            <button key={n.id} onClick={()=>setPage(n.id)} style={{
+              display:"flex",alignItems:"center",gap:"0.55rem",width:"100%",
+              padding:"0.5rem 1.1rem",background:page===n.id?"rgba(124,154,110,0.1)":"none",
+              border:"none",borderLeft:page===n.id?`2px solid ${C.moss}`:"2px solid transparent",
+              color:page===n.id?C.moss:C.dim,cursor:"pointer",fontSize:"0.77rem",
+              letterSpacing:"0.05em",textAlign:"left",transition:"all 0.15s"
+            }}>
+              <span style={{fontSize:11}}>{n.icon}</span>{n.label}
+              {n.id==="aiops"&&!apiKey&&<span style={{marginLeft:"auto",width:5,height:5,borderRadius:"50%",background:C.clay}}/>}
+            </button>
+          ))}
+        </nav>
+
+        <div style={{padding:"0.75rem 1.1rem",borderTop:"1px solid rgba(255,255,255,0.05)",fontSize:"0.6rem",color:C.dim}}>
+          AURA v2 · ENSO Holistic · {today()}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <main style={{marginLeft:190,flex:1,padding:"1.5rem 1.75rem 4rem",maxWidth:1080}}>
+        {/* Page header */}
+        <div style={{marginBottom:"1.25rem",paddingBottom:"0.85rem",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <h1 style={{margin:0,fontWeight:400,fontSize:"1.15rem",letterSpacing:"0.08em",color:C.text}}>
+            {NAVS.find(n=>n.id===page)?.label}
+          </h1>
+          <div style={{fontSize:"0.65rem",color:C.dim,marginTop:"0.2rem",letterSpacing:"0.1em"}}>
+            ZENVIA Services · ENSO Holistic Wellness · Lavington, Nairobi
+          </div>
+        </div>
+
+        {page==="dashboard" && <Dashboard sprintProgress={sprintProgress} revenueLog={revenueLog} outreach={outreach} briefing={briefing} onBriefing={generateBriefing} briefingLoading={briefingLoading}/>}
+        {page==="sprint"    && <SprintTracker sprintProgress={sprintProgress} setSprintProgress={setSprintProgress}/>}
+        {page==="revenue"   && <RevenueLog revenueLog={revenueLog} setRevenueLog={setRevenueLog}/>}
+        {page==="aiops"     && <AIOps apiKey={apiKey}/>}
+        {page==="outreach"  && <OutreachPipeline outreach={outreach} setOutreach={setOutreach}/>}
+        {page==="content"   && <ContentCalendar content={content} setContent={setContent}/>}
+        {page==="settings"  && <Settings apiKey={apiKey} setApiKey={setApiKey}/>}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>
